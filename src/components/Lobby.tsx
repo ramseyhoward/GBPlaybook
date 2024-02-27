@@ -87,6 +87,9 @@ const LobbyStart = (props: LobbyStepProps) => {
           uid: uid,
         });
         written = true;
+        if (props?.onComplete) {
+          props?.onComplete();
+        }
       } catch (e) {
         if (e instanceof FirebaseError && e.code === "permission-denied") {
           console.log(e);
@@ -124,11 +127,11 @@ const LobbyStart = (props: LobbyStepProps) => {
     await Promise.race([
       new Promise<void>(
         (resolve, _reject) =>
-          (pc.onicegatheringstatechange = (ev) => {
-            if (pc.iceGatheringState === "complete") {
-              resolve();
-            }
-          })
+        (pc.onicegatheringstatechange = (ev) => {
+          if (pc.iceGatheringState === "complete") {
+            resolve();
+          }
+        })
       ),
       new Promise<void>((resolve, _reject) => setTimeout(resolve, 1000)),
     ]).then(async () => {
@@ -143,6 +146,9 @@ const LobbyStart = (props: LobbyStepProps) => {
       user: { uid },
     } = await signInAnonymously(auth);
     props.setState((state) => ({ ...state, oid: uid, initiator: false }));
+    if (props?.onComplete) {
+      props?.onComplete();
+    }
     // can't do this to kick ICE gathering early, because Safari doesn't support
     // automatic rollback before 5.14, which is only about a year old
     // await pc.setLocalDescription();
@@ -151,18 +157,12 @@ const LobbyStart = (props: LobbyStepProps) => {
   return (
     <Box component="form" noValidate autoComplete="off">
       <Button
-        onClick={async () => {
-          await newGame();
-          props?.onComplete();
-        }}
+        onClick={newGame}
       >
         Start a Game
       </Button>
       <Button
-        onClick={async () => {
-          await joinGame();
-          props?.onComplete();
-        }}
+        onClick={joinGame}
       >
         Join a Game
       </Button>
@@ -314,11 +314,11 @@ const LobbyConnectJoin = (props: LobbyStepProps) => {
       await Promise.race([
         new Promise<void>(
           (resolve, _reject) =>
-            (pc.onicegatheringstatechange = (ev) => {
-              if (pc.iceGatheringState === "complete") {
-                resolve();
-              }
-            })
+          (pc.onicegatheringstatechange = (ev) => {
+            if (pc.iceGatheringState === "complete") {
+              resolve();
+            }
+          })
         ),
         new Promise<void>((resolve, _reject) => setTimeout(resolve, 1000)),
       ]).then(() => {
